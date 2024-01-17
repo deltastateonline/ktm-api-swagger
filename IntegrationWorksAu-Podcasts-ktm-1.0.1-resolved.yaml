@@ -1,0 +1,233 @@
+---
+openapi: 3.0.0
+info:
+  title: Podcasts for Kate Tim and Marty or Joel
+  description: This api allows the requester to interact with the ktm podcasts list
+  contact:
+    name: API Support
+    url: https://ktm.deltastateonline.com/
+    email: ktmj.library@deltastateonline.com
+  version: 1.0.1
+servers:
+- url: https://virtserver.swaggerhub.com/IntegrationWorksAu/Podcasts-ktm/1.0.1
+  description: SwaggerHub API Auto Mocking
+- url: https://apim-assets-01.azure-api.net/v1
+  description: KtmJ Podcast APIM
+security:
+- ApimSubscriptionQuery: []
+- ApimSubscriptionHeader: []
+paths:
+  /podcasts:
+    get:
+      summary: Get list of podcasts
+      description: Get a paginated list of podcasts.
+      operationId: getpodcasts
+      parameters:
+      - name: page
+        in: query
+        description: Page number
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        description: Number of podcasts returned
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 100
+          minimum: 20
+          type: integer
+      - name: q
+        in: query
+        description: Search term
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            link:
+              style: simple
+              explode: false
+              schema:
+                type: string
+                example: "</podcasts?page=5&limit=20>; rel=\"prev\"; title=\"previous page\",</podcasts?page=7&limit=20>; rel=\"next\"; title=\"next page\""
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/podcasts'
+  /podcastgroup/{year}:
+    get:
+      summary: Count of number of podcasts by year month
+      description: Get an aggregated list of podcasts by year. default to 2020.
+      operationId: get-podcast-group
+      parameters:
+      - name: year
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          maximum: 2023
+          minimum: 2019
+          type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/podcastgroup'
+  /podcastsbydate/{year-month}:
+    get:
+      summary: List podcasts by calendar month
+      description: Get a list of podcast for a calendar month.
+      operationId: get-podcasts-by-date
+      parameters:
+      - name: year-month
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/podcasts-year-month'
+  /health:
+    get:
+      summary: Server heartbeat operation
+      description: "This operation shows how to override the global security defined above, as we want to open it up for all users."
+      operationId: get-health
+      responses:
+        "200":
+          description: Api is alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+      security: []
+components:
+  schemas:
+    podcastgroup:
+      type: object
+      properties:
+        Items:
+          type: array
+          example:
+          - podcastbymonth: 2021-01
+            howmany: 10
+          - podcastbymonth: 2021-02
+            howmany: 6
+          - podcastbymonth: 2021-03
+            howmany: 11
+          items:
+            $ref: '#/components/schemas/podcastgroup_Items'
+        total:
+          type: integer
+          example: 3
+    podcasts:
+      type: object
+      properties:
+        Items:
+          type: array
+          items:
+            $ref: '#/components/schemas/podcast'
+        total:
+          type: integer
+          example: 2
+        _links:
+          $ref: '#/components/schemas/podcasts__links'
+    podcasts-year-month:
+      type: object
+      properties:
+        Items:
+          type: array
+          items:
+            $ref: '#/components/schemas/podcast'
+        total:
+          type: integer
+          example: 2
+    podcast:
+      type: object
+      properties:
+        guid:
+          type: string
+        title:
+          type: string
+        pubDate:
+          type: string
+        pubDate_raw:
+          type: string
+        description:
+          type: string
+        podcast_source_url:
+          type: string
+        podcast_length:
+          type: string
+        podcast_duration:
+          type: string
+        podcast_type:
+          type: string
+        podcast_link:
+          type: string
+        podcast_author:
+          type: string
+        show_title:
+          type: string
+        show_link:
+          type: string
+        show_image_url:
+          type: string
+      example:
+      - guid: abcd-3433-0999-3333-000
+        title: "KTM Podcast - 01 March, 2019"
+        description: 2019-03-01 18:06:27
+      - guid: c77a4993-58a3-4577-9bee-ac2c004d0edc
+        title: "KTM Podcast - 09 May, 2019"
+        description: 2019-05-09 12:01:55
+    inline_response_200:
+      type: object
+      properties:
+        message:
+          type: string
+      example:
+        message: alive
+    podcastgroup_Items:
+      type: object
+      properties:
+        podcastbymonth:
+          type: string
+          example: 2023-01
+        howmany:
+          type: integer
+          example: 24
+    podcasts__links:
+      type: object
+      properties:
+        prev:
+          type: string
+          example: /podcasts?page=6&limit=20
+        next:
+          type: string
+          example: /podcasts?page=7&limit=20
+  securitySchemes:
+    ApimSubscriptionHeader:
+      type: apiKey
+      name: x-api-key
+      in: header
+    ApimSubscriptionQuery:
+      type: apiKey
+      name: subscription-key
+      in: query
